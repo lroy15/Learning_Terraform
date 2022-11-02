@@ -13,14 +13,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_instance" "app_server" {
-  ami           = "ami-0b9a603c10937a61b"
-  instance_type = "t2.micro"
-
-  tags = {
-    Name = "ExampleAppServerInstance"
-  }
-}
 
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
