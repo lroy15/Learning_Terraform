@@ -80,13 +80,13 @@ resource "aws_lb" "test" {
   name               = "kubernetes"
   internal           = false
   load_balancer_type = "network"
-  subnets            = ["10.0.1.0/24"]
-  enable_deletion_protection = true
+  subnets            = [aws_subnet.test.id]
+  enable_deletion_protection = false
 }
 
 resource "aws_lb_target_group" "kubernetes" {
     name = "kubernetes"
-    protocol = "tcp"
+    protocol = "TCP"
     port = 6443
     vpc_id = aws_vpc.main.id
     target_type = "ip"
