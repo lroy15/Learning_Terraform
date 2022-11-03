@@ -46,7 +46,41 @@ variable "sg_rules" {
 }
 
 
-variable ipaddrs {
+variable "ipaddrs" {
     type = list(string)
     default = ["10.0.1.10","10.0.1.11","10.0.1.12"]
+}
+
+
+variable "kuber_instances" {
+    type = list(object({
+    image-id     = string
+    key-name    = string
+    instance-type    = string
+    private-ip-address = string
+    user-data = string
+    block-device-mappings = object({
+        DeviceName = string
+        Ebs = object({
+            VolumeSize = number
+        })
+        NoDevice = string
+    })
+  }))
+  default = [
+    {
+        image-id     = "ami-01d08089481510ba2"
+        key-name    = "kubernetes"
+        instance-type    = "t3.micro"
+        private-ip-address = "10.0.1.10"
+        user-data = "name=controller-0"
+        block-device-mappings = {
+            DeviceName = "/dev/sda1"
+            Ebs = {
+                VolumeSize = 50
+            }
+        NoDevice = ""
+        }
+    }
+  ]
 }

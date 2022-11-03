@@ -14,6 +14,8 @@ provider "aws" {
 }
 
 
+
+
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   instance_tenancy     = "default"
@@ -63,6 +65,7 @@ resource "aws_route_table_association" "a" {
 
 resource "aws_security_group" "kubernetes_sg" {
   vpc_id = aws_vpc.main.id
+  name = "kuber_sg"
 
   dynamic "ingress" {
     for_each = var.sg_rules
@@ -97,20 +100,38 @@ resource "aws_lb_target_group" "kubernetes" {
 }
 
 resource "aws_lb_target_group_attachment" "kubernetes" {
-    for_each = toset(var.ipaddrs)
+    
     port = 6443
-    target_group_arn = aws_lb.test.arn
-    target_id = each.value
+    target_group_arn = aws_lb_target_group.kubernetes.id
+    target_id = "10.0.1.10"
 }
 
 
 
 resource "aws_lb_listener" "kubernetes" {
     load_balancer_arn = aws_lb.test.arn
-    protocol = "tcp"
+    protocol = "TCP"
     port = 443
     default_action {
       type="forward"
-      target_group_arn = aws_lb.test.arn
+      target_group_arn = aws_lb_target_group.kubernetes.arn
     }
+}
+
+
+resource "aws_instance" "kubernetes" {
+
+    ami     = "ami-01d08089481510ba2"
+    key_name    = "kubernetes"
+    instance_type    = "t3.micro"
+    private_ip = "10.0.1.10"
+    subnet_id = aws_subnet.test.id
+    associate_public_ip_address = true
+    vpc_security_group_ids = [aws_security_group.kubernetes_sg.id]
+    user_data = "name=controller-0"
+    ebs_block_device {
+            device_name = "/dev/sda1"
+            volume_size = 50
+    }
+    
 }
