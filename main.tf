@@ -100,10 +100,10 @@ resource "aws_lb_target_group" "kubernetes" {
 }
 
 resource "aws_lb_target_group_attachment" "kubernetes" {
-    
+    count = 3
     port = 6443
     target_group_arn = aws_lb_target_group.kubernetes.id
-    target_id = "10.0.1.10"
+    target_id = "10.0.1.1${count.index}"
 }
 
 
@@ -121,17 +121,39 @@ resource "aws_lb_listener" "kubernetes" {
 
 resource "aws_instance" "kubernetes" {
 
+    count = 3
     ami     = "ami-01d08089481510ba2"
     key_name    = "kubernetes"
     instance_type    = "t3.micro"
-    private_ip = "10.0.1.10"
+    private_ip = "10.0.1.1${count.index}"
     subnet_id = aws_subnet.test.id
     associate_public_ip_address = true
     vpc_security_group_ids = [aws_security_group.kubernetes_sg.id]
-    user_data = "name=controller-0"
+    user_data = "name=controller-${count.index}"
     ebs_block_device {
             device_name = "/dev/sda1"
             volume_size = 50
     }
     
+}
+
+resource "aws_instance" "kubernetes_worker" {
+    count = 3
+    ami = "ami-01d08089481510ba2"
+    associate_public_ip_address = true
+    key_name = "kubernetes"
+    vpc_security_group_ids = [aws_security_group.kubernetes_sg.id]
+    instance_type    = "t3.micro"
+    private_ip = "10.0.1.2${count.index}"
+    subnet_id = aws_subnet.test.id
+    user_data {
+        name = "worker-${count.index}|pod-cidr=10.200.${count.index}.0/24"
+    }
+    ebs_block_device {
+            device_name = "/dev/sda1"
+            volume_size = 50
+    }
+    tags = {
+        "Name"="worker-${count.index}"
+    }
 }
